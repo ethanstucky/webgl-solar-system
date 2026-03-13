@@ -32,6 +32,7 @@ var saturnRingsGeometry = null;
 var uranusGeometry = null;
 var neptuneGeometry = null;
 var plutoGeometry = null;
+var cloudsGeometry = null;
 
 var projectionMatrix = new Matrix4();
 var uLightPosition = new Vector4(0, 0, 0, 1.0);
@@ -62,6 +63,7 @@ var loadedAssets = {
     uranusImage: null,
     neptuneImage: null,
     plutoImage: null,
+    cloudsImage: null,
 };
 
 // -------------------------------------------------------------------------
@@ -114,10 +116,11 @@ function loadAssets(onLoadedCB) {
         loadImage('/data/Additional_Planets/mars.jpg'),
         loadImage('/data/Additional_Planets/jupiter.jpg'),
         loadImage('/data/Additional_Planets/saturn.jpg'),
-        loadImage('/data/Additional_Planets/saturnRings.jpg'),
+        loadImage('/data/Additional_Planets/saturnRings.png'),
         loadImage('/data/Additional_Planets/uranus.jpg'),
         loadImage('/data/Additional_Planets/neptune.jpg'),
         loadImage('/data/Additional_Planets/pluto.jpg'),
+        loadImage('/data/Earth Day-Night-Clouds/2k_earth_clouds.jpg'),
 
     ];
 
@@ -146,6 +149,7 @@ function loadAssets(onLoadedCB) {
         loadedAssets.uranusImage = values[20];
         loadedAssets.neptuneImage = values[21];
         loadedAssets.plutoImage = values[22];
+        loadedAssets.cloudsImage = values[23];
 
     }).catch(function(error) {
         console.error(error.message);
@@ -217,7 +221,7 @@ function createScene() {
 
     // -------------------------------------------------------------------- SkyBox PosY creation
     skyBoxPosYGeometry = new WebGLGeometryQuad(gl, lightSphereShaderProgram);
-    skyBoxPosYGeometry.create(loadedAssets.loadedAssets.saturnRingsImage);
+    skyBoxPosYGeometry.create(loadedAssets.skyBoxPosY);
 
     var scale = new Matrix4().makeScale(250.0, 250.0, 250.0);
     var rotation = new Matrix4().makeRotationX(90);
@@ -330,12 +334,12 @@ function createScene() {
     saturnGeometry.worldMatrix.makeIdentity();
     saturnGeometry.worldMatrix.multiply(translation).multiply(scale);
      // -------------------------------------------------------------------- Saturns Rings creation
-     saturnRingsGeometry = new WebGLGeometryJSON(gl, lightSphereShaderProgram);
-     saturnRingsGeometry.create(loadedAssets.sphereJSON, loadedAssets.saturnRingsImage);
+     saturnRingsGeometry = new WebGLGeometryJSON(gl, phongShaderProgram);
+     saturnRingsGeometry.create(loadedAssets.sphereJSON, loadedAssets.saturnImage);
  
-     var scale = new Matrix4().makeScale(0.4, 0.001, 0.4);
-     var rotation = new Matrix4().makeRotationX(90);
-     var translation = new Matrix4().makeTranslation(90, 0, 0, 1);
+     var scale = new Matrix4().makeScale(0.4, 0, 0.4);
+    //  var rotation = new Matrix4().makeRotationY(90);
+     var translation = new Matrix4().makeTranslation(0, 20, 0, 1);
  
      saturnRingsGeometry.worldMatrix.makeIdentity();
      saturnRingsGeometry.worldMatrix.multiply(translation).multiply(rotation).multiply(scale);
@@ -412,10 +416,12 @@ function updateAndRender() {
     let moonScale = new Matrix4().makeScale(0.01,0.01,0.01);
     let moonTranslate = new Matrix4().makeTranslation(5,0,0,1)
     let moonRotation = new Matrix4().makeRotationY(time.secondsElapsedSinceStart * 105); // Local orbit rotation
+    let moonOrbitaltilt = new Matrix4().makeRotationZ(5);
     let unScaledEarthTransform = new Matrix4().makeRotationY(time.secondsElapsedSinceStart * 30) // Earth orbit rotation
     .multiply(new Matrix4().makeTranslation(35,0,0,1))
 
     let moonTransform = unScaledEarthTransform
+    .multiply(moonOrbitaltilt)
     .multiply(moonRotation)
     .multiply(moonTranslate)
     .multiply(moonScale);
@@ -433,17 +439,20 @@ function updateAndRender() {
     .multiply(new Matrix4().makeScale(0.08, 0.08, 0.08));
     jupiterGeometry.worldMatrix.copy(jupiterTransform);
 
+    let saturnTilt = new Matrix4().makeRotationX(-27);
+
     let saturnTransform = new Matrix4().makeRotationY(time.secondsElapsedSinceStart * 7) // solar orbit rotation
     .multiply(new Matrix4().makeTranslation(90,0,0,1))
-    .multiply(new Matrix4().makeRotationY(time.secondsElapsedSinceStart * 180)) // Local rotation
+    .multiply(saturnTilt)
+    .multiply(new Matrix4().makeRotationY(time.secondsElapsedSinceStart * 180))// Local rotation
     .multiply(new Matrix4().makeScale(0.065, 0.045, 0.065));
     saturnGeometry.worldMatrix.copy(saturnTransform);
 
-    // let saturnRingsTransform = new Matrix4().makeRotationY(time.secondsElapsedSinceStart * 7) // solar orbit rotation
-    // .multiply(new Matrix4().makeTranslation(90,0,0,1))
-    //.multiply(new Matrix4().makeRotationY(time.secondsElapsedSinceStart * 180)) // Local rotation
-    // .multiply(new Matrix4().makeScale(0.2, 0.001, 0.2));
-    // saturnRingsGeometry.worldMatrix.copy(saturnRingsTransform);
+    let saturnRingsTransform = new Matrix4().makeRotationY(time.secondsElapsedSinceStart * 7) // solar orbit rotation
+    .multiply(new Matrix4().makeTranslation(90,0,0,1))
+    .multiply(saturnTilt) // off axis tilt
+    .multiply(new Matrix4().makeScale(0.15, 0.001, 0.15))
+    saturnRingsGeometry.worldMatrix.copy(saturnRingsTransform);
 
     let uranusTransform = new Matrix4().makeRotationY(time.secondsElapsedSinceStart * 2) // solar orbit rotation
     .multiply(new Matrix4().makeTranslation(100,0,0,1))
@@ -482,27 +491,27 @@ function updateAndRender() {
     var aspectRatio = gl.canvasWidth / gl.canvasHeight;
     projectionMatrix.makePerspective(45, aspectRatio, 0.1, 1000);
 
-    // skyBoxPosXGeometry.render(camera, projectionMatrix, lightSphereShaderProgram);
-    // skyBoxNegXGeometry.render(camera, projectionMatrix, lightSphereShaderProgram);
-     skyBoxPosYGeometry.render(camera, projectionMatrix, lightSphereShaderProgram);
-    // skyBoxNegYGeometry.render(camera, projectionMatrix, lightSphereShaderProgram);
-    // skyBoxPosZGeometry.render(camera, projectionMatrix, lightSphereShaderProgram);
-    // skyBoxNegZGeometry.render(camera, projectionMatrix, lightSphereShaderProgram);
-    // mercuryGeometry.render(camera, projectionMatrix, phongShaderProgram);
-    // venusGeometry.render(camera, projectionMatrix, phongShaderProgram);
-    // earthGeometry.render(camera, projectionMatrix, phongShaderProgram);
-    // moonGeometry.render(camera, projectionMatrix, phongShaderProgram);
-    // marsGeometry.render(camera, projectionMatrix, phongShaderProgram);
-    // jupiterGeometry.render(camera, projectionMatrix, phongShaderProgram);
-    // saturnGeometry.render(camera, projectionMatrix, phongShaderProgram);
-    // uranusGeometry.render(camera, projectionMatrix, phongShaderProgram);
-    // neptuneGeometry.render(camera, projectionMatrix, phongShaderProgram);
-    // plutoGeometry.render(camera, projectionMatrix, phongShaderProgram);
+    skyBoxPosXGeometry.render(camera, projectionMatrix, lightSphereShaderProgram);
+    skyBoxNegXGeometry.render(camera, projectionMatrix, lightSphereShaderProgram);
+    skyBoxPosYGeometry.render(camera, projectionMatrix, lightSphereShaderProgram);
+    skyBoxNegYGeometry.render(camera, projectionMatrix, lightSphereShaderProgram);
+    skyBoxPosZGeometry.render(camera, projectionMatrix, lightSphereShaderProgram);
+    skyBoxNegZGeometry.render(camera, projectionMatrix, lightSphereShaderProgram);
+    mercuryGeometry.render(camera, projectionMatrix, phongShaderProgram);
+    venusGeometry.render(camera, projectionMatrix, phongShaderProgram);
+    earthGeometry.render(camera, projectionMatrix, phongShaderProgram);
+    moonGeometry.render(camera, projectionMatrix, phongShaderProgram);
+    marsGeometry.render(camera, projectionMatrix, phongShaderProgram);
+    jupiterGeometry.render(camera, projectionMatrix, phongShaderProgram);
+    saturnGeometry.render(camera, projectionMatrix, phongShaderProgram);
+    saturnRingsGeometry.render(camera, projectionMatrix, phongShaderProgram);
+    uranusGeometry.render(camera, projectionMatrix, phongShaderProgram);
+    neptuneGeometry.render(camera, projectionMatrix, phongShaderProgram);
+    plutoGeometry.render(camera, projectionMatrix, phongShaderProgram);
 
     gl.useProgram(lightSphereShaderProgram);
     sunGeometry.render(camera, projectionMatrix, lightSphereShaderProgram);
-    saturnRingsGeometry.render(camera, projectionMatrix, lightSphereShaderProgram);
-
+    
     
 }
 

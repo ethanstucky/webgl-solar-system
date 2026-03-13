@@ -11,6 +11,7 @@ function Input() {
     this.d = false;
     this.w = false;
     this.f = false;
+    this.space = false;
 
     // -------------------------------------------------------------------------
     function onKeyUp(e) {
@@ -23,6 +24,7 @@ function Input() {
         if (e.key == "d") { this.d = false; }
         if (e.key == "f") { this.f = false; }
         if (e.key == "w") { this.w = false; }
+        if (e.key == " ") { this.space = false; }
     }
 
     // -------------------------------------------------------------------------
@@ -36,6 +38,7 @@ function Input() {
         if (e.key == "d") { this.d = true; }
         if (e.key == "f") { this.f = true; }
         if (e.key == "w") { this.w = true; }
+        if (e.key == " ") { this.space = true; }
 	}
 
 	window.addEventListener('keydown', onKeyDown.bind(this));
